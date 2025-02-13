@@ -1,7 +1,6 @@
+use super::{Monster, Name, Viewshed};
 use rltk::{console, Point};
 use specs::prelude::*;
-
-use crate::components::{Monster, Name, Position, Viewshed};
 
 pub struct MonsterAI {}
 

@@ -1,13 +1,9 @@
-use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, Tile, RGB};
-use specs::World;
-
-use crate::{
-    components::{Player, Viewshed},
-    rect::Rect,
-};
+use super::Rect;
+use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
+use specs::prelude::*;
 use std::cmp::{max, min};
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
     Wall,
     Floor,
@@ -23,21 +19,9 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
 }
 
-impl BaseMap for Map {
-    fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
-    }
-}
-
-impl Algorithm2D for Map {
-    fn dimensions(&self) -> rltk::Point {
-        Point::new(self.width, self.height)
-    }
-}
-
 impl Map {
     pub fn xy_idx(&self, x: i32, y: i32) -> usize {
-        (y as usize * 80) + x as usize
+        (y as usize * self.width as usize) + x as usize
     }
 
     fn apply_room_to_map(&mut self, room: &Rect) {
@@ -88,12 +72,12 @@ impl Map {
         for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, 80 - w - 1) - 1;
-            let y = rng.roll_dice(1, 50 - h - 1) - 1;
+            let x = rng.roll_dice(1, map.width - w - 1) - 1;
+            let y = rng.roll_dice(1, map.height - h - 1) - 1;
             let new_room = Rect::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
-                if new_room.interselect(other_room) {
+                if new_room.intersect(other_room) {
                     ok = false
                 }
             }
@@ -115,7 +99,20 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
         map
+    }
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.tiles[idx] == TileType::Wall
+    }
+}
+
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
     }
 }
 
